@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1411681789 source:c:\users\danward\documents\github\npc-city\main.cpp
+	<allegro.h>
+	<alpng.h>
+
