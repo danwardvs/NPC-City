@@ -6,6 +6,11 @@
 
 BITMAP* buffer;
 BITMAP* npc_1;
+BITMAP* skin_1;
+BITMAP* skin_2;
+BITMAP* skin_3;
+BITMAP* skin_4;
+BITMAP* skin_5;
 BITMAP* vending_machine;
 
 bool close_button_pressed;
@@ -48,13 +53,25 @@ struct npcs{
     int hunger;
     int money;
     float thirst;
+    float happiness;
+    bool alive;
     int priority;
+    int social;
+    int skin;
 }npc[10];
 
+// Function to check for collision
+bool collision(float xMin1, float xMax1, float xMin2, float xMax2, float yMin1, float yMax1, float yMin2, float yMax2)
+{
+  if (xMin1 < xMax2 && yMin1 < yMax2 && xMin2 < xMax1 && yMin2 < yMax1){
+    return true;
+  }
+  return false;
+}
 
+//Distance to object
 int distance_to_object(int x_1, int y_1,int x_2,int y_2){
     return sqrt((pow(x_1-x_2,2))+(pow(y_1-y_2,2)));
-
 }
 // Random number generator. Use int random(highest,lowest);
 int random(int newLowest, int newHighest)
@@ -79,14 +96,20 @@ void abort_on_error(const char *message){
 
 void update(){
     //NPC Parser
-    for(int i=0; i<10; i++){
-        npc[i].thirst-=0.1;
+for(int i=0; i<10; i++){
+    if(npc[i].alive){
+        if(npc[i].happiness<1)npc[i].alive=false;
+        if(npc[i].x<1)npc[i].x=1;
+        if(npc[i].y<1)npc[i].y=1;
+
+        npc[i].thirst-=0.001;
+        npc[i].happiness-=0.1;
         //Get a drink
         if(npc[i].thirst<75){
-            if(npc[i].priority<1)
-                npc[i].priority=1;
+            if(npc[i].priority<2)
+                npc[i].priority=2;
         }
-       if(npc[i].thirst<75 && npc[i].priority==1){
+       if(npc[i].thirst<75 && npc[i].priority==2){
             //Find a vending machine
             int closest_vending_machine;
             int distance_will_travel=500;
@@ -99,7 +122,7 @@ void update(){
             if(vendingmachine[closest_vending_machine].x+15<npc[i].x)npc[i].x-=1*npc[i].speed;
             if(vendingmachine[closest_vending_machine].y+30>npc[i].y)npc[i].y+=1*npc[i].speed;
             if(vendingmachine[closest_vending_machine].y+30<npc[i].y)npc[i].y-=1*npc[i].speed;
-            if(vendingmachine[closest_vending_machine].y+30==npc[i].y && vendingmachine[closest_vending_machine].x+15==npc[i].x){
+            if(collision(vendingmachine[closest_vending_machine].x,vendingmachine[closest_vending_machine].x+60,npc[i].x,npc[i].x,vendingmachine[closest_vending_machine].y,vendingmachine[closest_vending_machine].y+60,npc[i].y,npc[i].y)){
                 if(npc[i].money>2){
                     npc[i].thirst+=50;
                     if(npc[i].thirst>75)npc[i].priority=0;
@@ -107,22 +130,44 @@ void update(){
                 }
             }
         }
+        if(npc[i].x<1)npc[i].x=1;
+        if(npc[i].y<1)npc[i].y=1;
+        //Get away from people
+
+        for(int j=0; j<10; j++){
+            if(distance_to_object(npc[i].x,npc[i].y,npc[j].x,npc[j].y)<npc[i].social){
+                if(npc[i].priority==0){
+                    if(npc[j].x>npc[i].x)npc[i].x-=1*npc[i].speed;
+                    if(npc[j].x<npc[i].x)npc[i].x+=1*npc[i].speed;
+                    if(npc[j].y<npc[i].y)npc[i].y-=1*npc[i].speed;
+                    if(npc[j].y<npc[i].y)npc[i].y+=1*npc[i].speed;
+                    if(npc[j].x==npc[i].x)npc[i].x+10;
+                    if(npc[j].y==npc[i].y)npc[i].y+10;
+
+                    }
+                }
+            }
+
+
+
+
+
 
         //Wander
         if(npc[i].priority<1){
-            int randomnum=random(1,npc[i].speed);
+            int randomnum=random(1,4);
             if(randomnum==1)
-                npc[i].x++;
+                npc[i].x+=1*npc[i].speed;
             if(randomnum==2)
-                npc[i].y++;
-            //if(randomnum==3)
-               // npc[i].x--;
-           // if(randomnum==4)
-                //npc[i].y--;
+                npc[i].y+=1*npc[i].speed;
+            if(randomnum==3)
+                npc[i].x-=1*npc[i].speed;
+            if(randomnum==4)
+                npc[i].y-=1*npc[i].speed;
 
             }
         }
-
+    }
 
 
 }
@@ -131,10 +176,17 @@ void draw(bool to_screen){
     for(int i=0; i<10; i++){
         draw_sprite(buffer,vending_machine,vendingmachine[i].x,vendingmachine[i].y);
     }
-    draw_sprite(buffer,npc_1,npc[1].x,npc[1].y);
-    textprintf_centre_ex( buffer, font, npc[1].x+16, npc[1].y-10, makecol(0,0,0), -1, "%i", npc[1].money);
-    textprintf_centre_ex( buffer, font, npc[1].x+16, npc[1].y-18, makecol(0,0,0), -1, "%4.2f", npc[1].thirst);
-    textprintf_centre_ex( buffer, font, npc[1].x+16, npc[1].y-26, makecol(0,0,0), -1, "%i", npc[1].priority);
+    for(int i=0; i<10; i++){
+        if(npc[i].skin==1)draw_sprite(buffer,skin_1,npc[i].x,npc[i].y);
+        if(npc[i].skin==2)draw_sprite(buffer,skin_2,npc[i].x,npc[i].y);
+        if(npc[i].skin==3)draw_sprite(buffer,skin_3,npc[i].x,npc[i].y);
+        if(npc[i].skin==4)draw_sprite(buffer,skin_4,npc[i].x,npc[i].y);
+        if(npc[i].skin==4)draw_sprite(buffer,skin_4,npc[i].x,npc[i].y);
+        if(npc[i].skin==5)draw_sprite(buffer,skin_5,npc[i].x,npc[i].y);
+        textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-10, makecol(0,0,0), -1, "%i", npc[i].money);
+        textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-18, makecol(0,0,0), -1, "%4.2f", npc[i].happiness);
+        textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-26, makecol(0,0,0), -1, "%i", npc[i].priority);
+    }
     draw_sprite(screen,buffer,0,0);
 
 }
@@ -165,19 +217,46 @@ void setup(){
 
     buffer=create_bitmap(1024,768);
 
-    npc[1].x=500;
-    npc[1].y=100;
-    npc[1].gender=1;
-    npc[1].speed=5;
-    npc[1].hunger=25;
-    npc[1].money=100;
-    npc[1].thirst=20;
+    npc[0].x=500;
+    npc[0].y=100;
+    npc[0].speed=10;
+    npc[0].hunger=25;
+    npc[0].money=100;
+    npc[0].thirst=0;
+    npc[0].social=0;
+    npc[0].skin=5;
 
-    vendingmachine[1].x=400;
-    vendingmachine[1].y=600;
+    for(int i=1; i<10; i++){
+        npc[i].speed=1;
+        npc[i].skin=random(1,4);
+        npc[i].money=100;
+        npc[i].x=random(1,1000);
+        npc[i].y=random(1,1000);
+        npc[i].social=100;
+        npc[i].happiness=100;
+        npc[i].alive=true;
+    }
+    for(int i=0; i<10; i++){
+        vendingmachine[i].x=random(1,1000);
+        vendingmachine[i].y=random(1,600);
+    }
+
+
 
     if (!(npc_1 = load_bitmap("npc_1.png", NULL)))
       abort_on_error("Cannot find image npc_1.png\nPlease check your files and try again");
+    if (!(skin_1 = load_bitmap("skin_1.png", NULL)))
+      abort_on_error("Cannot find image skin_1.png\nPlease check your files and try again");
+    if (!(skin_2 = load_bitmap("skin_2.png", NULL)))
+      abort_on_error("Cannot find image skin_2.png\nPlease check your files and try again");
+    if (!(skin_3= load_bitmap("skin_3.png", NULL)))
+      abort_on_error("Cannot find image skin_3.png\nPlease check your files and try again");
+    if (!(skin_4 = load_bitmap("skin_4.png", NULL)))
+      abort_on_error("Cannot find image skin_4.png\nPlease check your files and try again");
+    if (!(skin_5 = load_bitmap("skin_5.png", NULL)))
+      abort_on_error("Cannot find image skin_5.png\nPlease check your files and try again");
+
+
     if (!(vending_machine = load_bitmap("vending_machine.png", NULL)))
       abort_on_error("Cannot find image vending_machine.png\nPlease check your files and try again");
 }
