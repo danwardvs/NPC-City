@@ -5,6 +5,7 @@
 
 
 BITMAP* buffer;
+BITMAP* cursor;
 BITMAP* npc_1;
 BITMAP* skin_1;
 BITMAP* skin_2;
@@ -187,6 +188,7 @@ void draw(bool to_screen){
         textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-18, makecol(0,0,0), -1, "%4.2f", npc[i].happiness);
         textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-26, makecol(0,0,0), -1, "%i", npc[i].priority);
     }
+    draw_sprite(buffer,cursor,mouse_x,mouse_y);
     draw_sprite(screen,buffer,0,0);
 
 }
@@ -245,6 +247,8 @@ void setup(){
 
     if (!(npc_1 = load_bitmap("npc_1.png", NULL)))
       abort_on_error("Cannot find image npc_1.png\nPlease check your files and try again");
+    if (!(cursor = load_bitmap("cursor.png", NULL)))
+      abort_on_error("Cannot find image cursor.png\nPlease check your files and try again");
     if (!(skin_1 = load_bitmap("skin_1.png", NULL)))
       abort_on_error("Cannot find image skin_1.png\nPlease check your files and try again");
     if (!(skin_2 = load_bitmap("skin_2.png", NULL)))
