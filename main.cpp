@@ -1,14 +1,16 @@
+#include<math.h>
 #include<allegro.h>
 #include<alpng.h>
 #include<time.h>
+
 
 BITMAP* buffer;
 BITMAP* npc_1;
 BITMAP* vending_machine;
 
 struct vendingmachines{
-    int x=-1000;
-    int y=-1000;
+    int x;
+    int y;
 }vendingmachine[10];
 
 struct npcs{
@@ -58,15 +60,19 @@ void update(){
             if(npc[i].priority<1)
                 npc[i].priority=1;
         }
-        if(thirst<75 && priority==1){
+       if(npc[i].thirst<75 && npc[i].priority==1){
             //Find a vending machine
             int closest_vending_machine;
             int distance_will_travel=500;
+
             for(int j=0; j<10; j++){
                 if(distance_to_object(npc[i].x,npc[i].y,vendingmachine[j].x,vendingmachine[j].y)<distance_will_travel)
                     closest_vending_machine=j;
             }
-            npc[i].
+            if(vendingmachine[closest_vending_machine].x>npc[i].x)npc[i].x+=1;
+            if(vendingmachine[closest_vending_machine].x<npc[i].x)npc[i].x-=1;
+            if(vendingmachine[closest_vending_machine].y>npc[i].y)npc[i].y+=1;
+            if(vendingmachine[closest_vending_machine].y<npc[i].y)npc[i].y-=1;
         }
 
         //Wander
@@ -110,13 +116,13 @@ void setup(){
 
     buffer=create_bitmap(1024,768);
 
-    npc[1].x=100;
-    npc[1].y=200;
+    npc[1].x=500;
+    npc[1].y=100;
     npc[1].gender=1;
     npc[1].speed=100;
     npc[1].hunger=25;
     npc[1].money=100;
-    npc[1].thirst=100;
+    npc[1].thirst=20;
 
     vendingmachine[1].x=400;
     vendingmachine[1].y=600;

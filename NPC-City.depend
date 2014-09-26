@@ -1,5 +1,7 @@
 # depslib dependency file v1.0
-1411681789 source:c:\users\danward\documents\github\npc-city\main.cpp
+1411697612 source:c:\users\danward\documents\github\npc-city\main.cpp
+	<math.h>
 	<allegro.h>
 	<alpng.h>
+	<time.h>
 
