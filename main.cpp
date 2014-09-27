@@ -16,6 +16,12 @@ BITMAP* vending_machine;
 
 bool close_button_pressed;
 
+int zoom_level=1;
+int mouse_z_old;
+int scroll_x;
+int scroll_y;
+int number_of_npcs=100;
+
 // FPS System
 volatile int ticks = 0;
 const int updates_per_second = 60;
@@ -59,7 +65,7 @@ struct npcs{
     int priority;
     int social;
     int skin;
-}npc[10];
+}npc[100];
 
 // Function to check for collision
 bool collision(float xMin1, float xMax1, float xMin2, float xMax2, float yMin1, float yMax1, float yMin2, float yMax2)
@@ -72,7 +78,7 @@ bool collision(float xMin1, float xMax1, float xMin2, float xMax2, float yMin1, 
 
 //Distance to object
 int distance_to_object(int x_1, int y_1,int x_2,int y_2){
-    return sqrt((pow(x_1-x_2,2))+(pow(y_1-y_2,2)));
+    return sqrt(abs((pow(x_1-x_2,2))+(pow(y_1-y_2,2))));
 }
 // Random number generator. Use int random(highest,lowest);
 int random(int newLowest, int newHighest)
@@ -96,15 +102,22 @@ void abort_on_error(const char *message){
 
 
 void update(){
+    //Scroll screen
+    if(mouse_z_old>mouse_z)zoom_level++;
+    if(mouse_z_old<mouse_z && zoom_level>1)zoom_level--;
+    mouse_z_old=mouse_z;
+    if(mouse_x<20)scroll_x+=4;
+    if(mouse_x>SCREEN_H-20)scroll_x-=4;
+    if(mouse_y<20)scroll_y+=4;
+    if(mouse_y>SCREEN_H-20)scroll_y-=4;
+
     //NPC Parser
-for(int i=0; i<10; i++){
+    for(int i=0; i<number_of_npcs; i++){
     if(npc[i].alive){
         if(npc[i].happiness<1)npc[i].alive=false;
-        if(npc[i].x<1)npc[i].x=1;
-        if(npc[i].y<1)npc[i].y=1;
 
         npc[i].thirst-=0.001;
-        npc[i].happiness-=0.1;
+        if(npc[i].thirst<50)npc[i].happiness-=0.1;
         //Get a drink
         if(npc[i].thirst<75){
             if(npc[i].priority<2)
@@ -131,42 +144,19 @@ for(int i=0; i<10; i++){
                 }
             }
         }
-        if(npc[i].x<1)npc[i].x=1;
-        if(npc[i].y<1)npc[i].y=1;
         //Get away from people
 
-        for(int j=0; j<10; j++){
-            if(distance_to_object(npc[i].x,npc[i].y,npc[j].x,npc[j].y)<npc[i].social){
-                if(npc[i].priority==0){
-                    if(npc[j].x>npc[i].x)npc[i].x-=1*npc[i].speed;
-                    if(npc[j].x<npc[i].x)npc[i].x+=1*npc[i].speed;
-                    if(npc[j].y<npc[i].y)npc[i].y-=1*npc[i].speed;
-                    if(npc[j].y<npc[i].y)npc[i].y+=1*npc[i].speed;
-                    if(npc[j].x==npc[i].x)npc[i].x+10;
-                    if(npc[j].y==npc[i].y)npc[i].y+10;
-
-                    }
-                }
-            }
 
 
 
 
 
 
-        //Wander
-        if(npc[i].priority<1){
-            int randomnum=random(1,4);
-            if(randomnum==1)
-                npc[i].x+=1*npc[i].speed;
-            if(randomnum==2)
-                npc[i].y+=1*npc[i].speed;
-            if(randomnum==3)
-                npc[i].x-=1*npc[i].speed;
-            if(randomnum==4)
-                npc[i].y-=1*npc[i].speed;
 
-            }
+
+
+
+
         }
     }
 
@@ -175,18 +165,19 @@ for(int i=0; i<10; i++){
 void draw(bool to_screen){
     rectfill(buffer,0,0,1024,768,makecol(255,255,255));
     for(int i=0; i<10; i++){
-        draw_sprite(buffer,vending_machine,vendingmachine[i].x,vendingmachine[i].y);
+        stretch_sprite(buffer,vending_machine,(vendingmachine[i].x/zoom_level)+scroll_x,(vendingmachine[i].y/zoom_level)+scroll_y,74/zoom_level,96/zoom_level);
     }
-    for(int i=0; i<10; i++){
-        if(npc[i].skin==1)draw_sprite(buffer,skin_1,npc[i].x,npc[i].y);
-        if(npc[i].skin==2)draw_sprite(buffer,skin_2,npc[i].x,npc[i].y);
-        if(npc[i].skin==3)draw_sprite(buffer,skin_3,npc[i].x,npc[i].y);
-        if(npc[i].skin==4)draw_sprite(buffer,skin_4,npc[i].x,npc[i].y);
-        if(npc[i].skin==4)draw_sprite(buffer,skin_4,npc[i].x,npc[i].y);
-        if(npc[i].skin==5)draw_sprite(buffer,skin_5,npc[i].x,npc[i].y);
-        textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-10, makecol(0,0,0), -1, "%i", npc[i].money);
-        textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-18, makecol(0,0,0), -1, "%4.2f", npc[i].happiness);
-        textprintf_centre_ex( buffer, font, npc[i].x+16, npc[i].y-26, makecol(0,0,0), -1, "%i", npc[i].priority);
+    for(int i=0; i<number_of_npcs; i++){
+        if(npc[i].skin==1)stretch_sprite(buffer,skin_1,(npc[i].x/zoom_level)+scroll_x,(npc[i].y/zoom_level)+scroll_y,64/zoom_level,112/zoom_level);
+        if(npc[i].skin==2)stretch_sprite(buffer,skin_2,(npc[i].x/zoom_level)+scroll_x,(npc[i].y/zoom_level)+scroll_y,64/zoom_level,112/zoom_level);
+        if(npc[i].skin==3)stretch_sprite(buffer,skin_3,(npc[i].x/zoom_level)+scroll_x,(npc[i].y/zoom_level)+scroll_y,64/zoom_level,112/zoom_level);
+        if(npc[i].skin==4)stretch_sprite(buffer,skin_4,(npc[i].x/zoom_level)+scroll_x,(npc[i].y/zoom_level)+scroll_y,64/zoom_level,112/zoom_level);
+        if(npc[i].skin==5)stretch_sprite(buffer,skin_5,(npc[i].x/zoom_level)+scroll_x,(npc[i].y/zoom_level)+scroll_y,64/zoom_level,112/zoom_level);
+        if(zoom_level==1){
+            textprintf_centre_ex( buffer, font, ((npc[i].x+32)/zoom_level)+scroll_x, ((npc[i].y+8)/zoom_level)+scroll_y, makecol(0,0,0), -1, "%i", npc[i].money);
+            textprintf_centre_ex( buffer, font, ((npc[i].x+32)/zoom_level)+scroll_x, ((npc[i].y+16)/zoom_level)+scroll_y, makecol(0,0,0), -1, "%4.2f", npc[i].happiness);
+            textprintf_centre_ex( buffer, font, ((npc[i].x+32)/zoom_level)+scroll_x, ((npc[i].y+24)/zoom_level)+scroll_y, makecol(0,0,0), -1, "%i", npc[i].priority);
+        }
     }
     draw_sprite(buffer,cursor,mouse_x,mouse_y);
     draw_sprite(screen,buffer,0,0);
@@ -228,19 +219,19 @@ void setup(){
     npc[0].social=0;
     npc[0].skin=5;
 
-    for(int i=1; i<10; i++){
+    for(int i=1; i<number_of_npcs; i++){
         npc[i].speed=1;
         npc[i].skin=random(1,4);
         npc[i].money=100;
-        npc[i].x=random(1,1000);
-        npc[i].y=random(1,1000);
-        npc[i].social=100;
+        npc[i].x=random(-1000,1000);
+        npc[i].y=random(-1000,1000);
+        npc[i].social=50;
         npc[i].happiness=100;
         npc[i].alive=true;
     }
     for(int i=0; i<10; i++){
-        vendingmachine[i].x=random(1,1000);
-        vendingmachine[i].y=random(1,600);
+        vendingmachine[i].x=random(-1000,1000);
+        vendingmachine[i].y=random(-1000,1000);
     }
 
 
