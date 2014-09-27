@@ -13,6 +13,7 @@ BITMAP* skin_3;
 BITMAP* skin_4;
 BITMAP* skin_5;
 BITMAP* vending_machine;
+BITMAP* hotel_bitmap;
 
 bool close_button_pressed;
 
@@ -21,6 +22,7 @@ int mouse_z_old;
 int scroll_x;
 int scroll_y;
 int number_of_npcs=100;
+float npc_time;
 
 // FPS System
 volatile int ticks = 0;
@@ -49,7 +51,14 @@ END_OF_FUNCTION(close_button_handler)
 struct vendingmachines{
     int x;
     int y;
+    int money;
 }vendingmachine[10];
+
+struct hotels{
+    int x;
+    int y;
+    int money;
+}hotel[10];
 
 struct npcs{
     int x;
@@ -59,6 +68,7 @@ struct npcs{
     int speed;
     int hunger;
     int money;
+    float energy;
     float thirst;
     float happiness;
     bool alive;
@@ -111,6 +121,9 @@ void update(){
     if(mouse_y<20)scroll_y+=4;
     if(mouse_y>SCREEN_H-20)scroll_y-=4;
 
+    npc_time+=0.1;
+    if(npc_time==24)npc_time=0;
+
     //NPC Parser
     for(int i=0; i<number_of_npcs; i++){
     if(npc[i].alive){
@@ -144,20 +157,7 @@ void update(){
                 }
             }
         }
-        //Get away from people
-
-
-
-
-
-
-
-
-
-
-
-
-        }
+      }
     }
 
 
@@ -250,6 +250,8 @@ void setup(){
       abort_on_error("Cannot find image skin_4.png\nPlease check your files and try again");
     if (!(skin_5 = load_bitmap("skin_5.png", NULL)))
       abort_on_error("Cannot find image skin_5.png\nPlease check your files and try again");
+    if (!(hotel_bitmap = load_bitmap("hotel_bitmap.png", NULL)))
+      abort_on_error("Cannot find image hotel_bitmap.png\nPlease check your files and try again");
 
 
     if (!(vending_machine = load_bitmap("vending_machine.png", NULL)))
